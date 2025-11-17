@@ -14,6 +14,7 @@ WORKDIR /app/
 COPY --from=builder /app/target/*.jar app.jar
 
 ENV MODEL_HOST="http://localhost:8081"
+ENV SERVER_PORT=8080
 EXPOSE 8080
 
 CMD [ "java", "-jar", "/app/app.jar" ]
