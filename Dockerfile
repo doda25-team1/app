@@ -13,8 +13,8 @@ WORKDIR /app/
 
 COPY --from=builder /app/target/*.jar app.jar
 
-ENV BACKEND_URL="http://model-service:8081"
+ENV BACKEND_URL="http://localhost:8081"
 ENV SERVER_PORT=8080
 EXPOSE ${SERVER_PORT}
 
-CMD ["sh", "-c", "java -jar -Dserver.port=${SERVER_PORT} /app/app.jar"]
+CMD ["java", "-jar", "/app/app.jar"]
