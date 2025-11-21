@@ -51,8 +51,9 @@ jobs:
       - name: Build and Push Docker Image
         run: |
           IMG="ghcr.io/${{github.repository}}:v${{ env.VERSION }}"
-          docker build -t $IMG .
-          docker push $IMG
+          docker buildx create --name mybuilder --use
+          docker buildx inspect --bootstrap
+          docker buildx build --platform linux/amd64,linux/arm64 -t $IMG --push .
       
   bump-version:
     runs-on: ubuntu-latest
