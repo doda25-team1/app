@@ -50,3 +50,6 @@ mvnw
 mvnw.cmd
 maven-wrapper.jar
 maven-wrapper.properties
+
+# Other
+.env

@@ -6,11 +6,25 @@ The frontend is implemented with Spring Boot and only consists of a website and 
 It **requires Java 25+** to run (tested with 25.0.1).
 Any classification requests will be delegated to the `backend` service that serves the model.
 You must specify the environment variable `MODEL_HOST` to define where the backend is running.
+Set up a `.env` file based on `.env.example` so the application can pick up these variables.
 
 The frontend service can be started through running the `Main` class (e.g., in your IDE) or through Maven (recommended):
 
     MODEL_HOST="http://localhost:8081" mvn spring-boot:run
 
 The server runs on port 8080. Once its startup has finished, you can access [localhost:8080/sms](http://localhost:8080/sms) in your browser to interact with the application.
+
+To run locally with Java and Maven (without Docker):
+
+```
+mvn -s settings.xml -U clean install
+set MODEL_HOST=http://localhost:8081 && mvn spring-boot:run
+```
+
+To build and test locally with Docker (user your GitHub username and PAT):
+
+```
+docker build --build-arg GITHUB_ACTOR=MyUserName --build-arg GITHUB_TOKEN=3t8rj13912r129r192rr2 -t my-app .
+```
 
 
