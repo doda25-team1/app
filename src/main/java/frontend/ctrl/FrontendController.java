@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.env.Environment;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import frontend.data.Sms;
+import frontend.metrics.MetricsCollector;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
@@ -24,9 +26,12 @@ public class FrontendController {
 
     private RestTemplateBuilder rest;
 
-    public FrontendController(RestTemplateBuilder rest, Environment env) {
+    private MetricsCollector metricsCollector;
+
+    public FrontendController(RestTemplateBuilder rest, Environment env, MetricsCollector metricsCollector) {
         this.rest = rest;
         this.modelHost = env.getProperty("MODEL_HOST");
+        this.metricsCollector = metricsCollector;
         assertModelHost();
     }
 
@@ -51,19 +56,60 @@ public class FrontendController {
         return "redirect:" + request.getRequestURI() + "/";
     }
 
+    @GetMapping(path = "/metrics", produces = "text/plain; version=0.0.4")
+    @ResponseBody
+    public String metrics() {
+        long startTime = System.currentTimeMillis();
+        metricsCollector.incrementActiveRequests();
+
+        try {
+            String metricsOutput = metricsCollector.generateMetrics();
+            metricsCollector.incrementRequestCounter("/sms/metrics", 200);
+            return metricsOutput;
+        } finally {
+            metricsCollector.decrementActiveRequests();
+            long duration = System.currentTimeMillis() - startTime;
+            metricsCollector.recordResponseDuration(duration);
+        }
+    }
+
     @GetMapping("/")
     public String index(Model m) {
-        m.addAttribute("hostname", modelHost);
-        return "sms/index";
+        long startTime = System.currentTimeMillis();
+        metricsCollector.incrementActiveRequests();
+
+        try {
+            m.addAttribute("hostname", modelHost);
+            metricsCollector.incrementRequestCounter("/sms/", 200);
+            return "sms/index";
+        } finally {
+            metricsCollector.decrementActiveRequests();
+            long duration = System.currentTimeMillis() - startTime;
+            metricsCollector.recordResponseDuration(duration);
+        }
     }
 
     @PostMapping({ "", "/" })
     @ResponseBody
     public Sms predict(@RequestBody Sms sms) {
-        System.out.printf("Requesting prediction for \"%s\" ...\n", sms.sms);
-        sms.result = getPrediction(sms);
-        System.out.printf("Prediction: %s\n", sms.result);
-        return sms;
+        long startTime = System.currentTimeMillis();
+        metricsCollector.incrementActiveRequests();
+        int statusCode = 200;
+
+        try {
+            System.out.printf("Requesting prediction for \"%s\" ...\n", sms.sms);
+            sms.result = getPrediction(sms);
+            System.out.printf("Prediction: %s\n", sms.result);
+            return sms;
+        } catch (Exception e) {
+            statusCode = 500;
+            throw e;
+        } finally {
+            metricsCollector.decrementActiveRequests();
+            metricsCollector.incrementRequestCounter("/sms/predict", statusCode);
+            long duration = System.currentTimeMillis() - startTime;
+            metricsCollector.recordResponseDuration(duration);
+        }
     }
 
     private String getPrediction(Sms sms) {
