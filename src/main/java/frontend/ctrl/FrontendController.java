@@ -28,10 +28,14 @@ public class FrontendController {
 
     private MetricsCollector metricsCollector;
 
+    private String appVersion;
+
     public FrontendController(RestTemplateBuilder rest, Environment env, MetricsCollector metricsCollector) {
         this.rest = rest;
         this.modelHost = env.getProperty("MODEL_HOST");
         this.metricsCollector = metricsCollector;
+        this.appVersion = env.getProperty("APP_VERSION", "v1").trim();
+        this.metricsCollector.setVariantLabel(this.appVersion);
         assertModelHost();
     }
 
@@ -80,6 +84,7 @@ public class FrontendController {
 
         try {
             m.addAttribute("hostname", modelHost);
+            m.addAttribute("appVersion", appVersion);
             metricsCollector.incrementRequestCounter("/sms/", 200);
             return "sms/index";
         } finally {
@@ -107,6 +112,7 @@ public class FrontendController {
         } finally {
             metricsCollector.decrementActiveRequests();
             metricsCollector.incrementRequestCounter("/sms/predict", statusCode);
+            metricsCollector.incrementPredictCounter(statusCode);
             long duration = System.currentTimeMillis() - startTime;
             metricsCollector.recordResponseDuration(duration);
         }
