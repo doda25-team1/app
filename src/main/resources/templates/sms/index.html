@@ -8,6 +8,10 @@
 </head>
 <body>
 <span id="hostname" th:text="${hostname}"></span>
+<div th:if="${appVersion == 'v2'}" class="variant-banner">
+	<span class="variant-chip">Experiment v2</span>
+	<span class="variant-copy">Modified call-to-action to boost checks.</span>
+</div>
 <h1>SMS Checker</h1>
 
 <form>
@@ -19,7 +23,8 @@
 	<input type="radio" name="guess" value="spam" /> Spam<br />
 </div>
 
-<button>Send</button>
+<button th:if="${appVersion == 'v2'}" class="primary-btn">Analyze Now</button>
+<button th:unless="${appVersion == 'v2'}">Send</button>
 </form>
 
 <p id="result"></p>
