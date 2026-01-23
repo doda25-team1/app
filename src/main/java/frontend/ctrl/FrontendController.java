@@ -3,9 +3,10 @@ package frontend.ctrl;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.env.Environment;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,8 @@ import jakarta.servlet.http.HttpServletRequest;
 @Controller
 @RequestMapping(path = "/sms")
 public class FrontendController {
+
+    private static final Logger log = LoggerFactory.getLogger(FrontendController.class);
 
     private String modelHost;
 
@@ -41,16 +44,15 @@ public class FrontendController {
 
     private void assertModelHost() {
         if (modelHost == null || modelHost.strip().isEmpty()) {
-            System.err.println("ERROR: ENV variable MODEL_HOST is null or empty");
+            log.error("ENV variable MODEL_HOST is null or empty");
             System.exit(1);
         }
         modelHost = modelHost.strip();
         if (modelHost.indexOf("://") == -1) {
-            var m = "ERROR: ENV variable MODEL_HOST is missing protocol, like \"http://...\" (was: \"%s\")\n";
-            System.err.printf(m, modelHost);
+            log.error("ENV variable MODEL_HOST is missing protocol, like \"http://...\" (was: \"{}\")", modelHost);
             System.exit(1);
         } else {
-            System.out.printf("Working with MODEL_HOST=\"%s\"\n", modelHost);
+            log.info("Working with MODEL_HOST=\"{}\"", modelHost);
         }
     }
 
@@ -103,9 +105,9 @@ public class FrontendController {
         int statusCode = 200;
 
         try {
-            System.out.printf("Requesting prediction for \"%s\" ...\n", sms.sms);
+            log.info("Requesting prediction for \"{}\" ...", sms.sms);
             sms.result = getPrediction(sms);
-            System.out.printf("Prediction: %s\n", sms.result);
+            log.info("Prediction: {}", sms.result);
             return sms;
         } catch (Exception e) {
             statusCode = 500;
