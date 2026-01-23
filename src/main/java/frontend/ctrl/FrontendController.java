@@ -85,6 +85,7 @@ public class FrontendController {
         try {
             m.addAttribute("hostname", modelHost);
             m.addAttribute("appVersion", appVersion);
+            System.out.printf("App version: %s\n", appVersion);
             metricsCollector.incrementRequestCounter("/sms/", 200);
             return "sms/index";
         } finally {
@@ -120,6 +121,7 @@ public class FrontendController {
 
     private String getPrediction(Sms sms) {
         try {
+            System.out.printf("App version: %s\n", appVersion);
             var url = new URI(modelHost + "/predict");
             var c = rest.build().postForEntity(url, sms, Sms.class);
             return c.getBody().result.trim();
